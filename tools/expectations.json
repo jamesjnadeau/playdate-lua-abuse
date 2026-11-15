@@ -19,6 +19,10 @@
       "top_hotspot_matches": "^\\[graphics\\.",
       "avg_rows_updated_min": 230,
       "over_budget": true
+    },
+    "sprites": {
+      "top_hotspot_matches": "sprite",
+      "over_budget": true
     }
   }
 }

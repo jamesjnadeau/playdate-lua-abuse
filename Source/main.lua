@@ -20,6 +20,7 @@ import "modes/control"
 import "modes/garbage"
 import "modes/hotloop"
 import "modes/overdraw"
+import "modes/sprites"
 
 local gfx <const> = playdate.graphics
 
