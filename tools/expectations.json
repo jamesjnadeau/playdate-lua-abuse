@@ -8,6 +8,11 @@
     "garbage": {
       "dominant_category": "gc",
       "over_budget": true
+    },
+    "hotloop": {
+      "dominant_category": "lua",
+      "top_hotspot_matches": "hotloop\\.lua",
+      "over_budget": true
     }
   }
 }

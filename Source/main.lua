@@ -18,6 +18,7 @@ ABUSE_MODES = {}
 
 import "modes/control"
 import "modes/garbage"
+import "modes/hotloop"
 
 local gfx <const> = playdate.graphics
 
