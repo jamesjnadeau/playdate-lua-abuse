@@ -30,6 +30,14 @@
     },
     "spike": {
       "spike_period": 60
+    },
+    "auto": {
+      "config": {
+        "mode": "auto",
+        "cycleFrames": 60
+      },
+      "frames": 900,
+      "auto_control_clean": true
     }
   }
 }

@@ -62,11 +62,18 @@ local function startMode(mode)
 	mode.enter()
 end
 
-local function stopMode()
+local auto = nil         -- auto-cycle state { k, left, cycle } or nil
+
+local function leaveMode()
 	if current then current.exit() end
 	current = nil
 	gfx.sprite.removeAll()
 	gfx.clear(gfx.kColorWhite)
+end
+
+local function stopMode()
+	leaveMode()
+	auto = nil
 	state = "menu"
 	menuDirty = true
 end
@@ -114,10 +121,25 @@ local function updateMenu()
 	if menuDirty then drawMenu() end
 end
 
--- Auto-cycle (stub until implemented) ----------------------------------------
+-- Auto-cycle ----------------------------------------------------------------
+-- Runs every mode for cycleFrames frames, control first, looping forever.
 
-startAuto = function()
-	menuDirty = true
+local DEFAULT_CYCLE <const> = 300
+
+startAuto = function(cycleFrames)
+	local cycle = tonumber(cycleFrames)
+	if not cycle or cycle < 1 then cycle = DEFAULT_CYCLE end
+	auto = { k = 1, left = math.floor(cycle), cycle = math.floor(cycle) }
+	startMode(MODES[1])
+end
+
+local function stepAuto()
+	auto.left -= 1
+	if auto.left > 0 then return end
+	leaveMode()
+	auto.k = auto.k % #MODES + 1
+	auto.left = auto.cycle
+	startMode(MODES[auto.k])
 end
 
 -- Startup -------------------------------------------------------------------
@@ -140,7 +162,8 @@ function playdate.update()
 			return
 		end
 		current.update()
-		drawOverlay(current)
+		drawOverlay(current, auto and (auto.k .. "/" .. #MODES) or nil)
+		if auto then stepAuto() end
 	end
 	playdate.timer.updateTimers()
 end

@@ -22,6 +22,7 @@ DEFAULT_SDK = "Developer/PlaydateSDK-3.1.2"
 
 MAX_SPIKE_GROUP = 3      # frames a single spike (plus its GC tail) may span
 SPIKE_SLACK = 5          # groups may start up to this many frames early
+AUTO_MODES = 7           # modes the auto-cycle steps through (control first)
 
 
 # --- evaluation (pure) ------------------------------------------------------
@@ -68,6 +69,12 @@ def top_hotspot(report):
     return hotspots[0]["name"] if hotspots else ""
 
 
+def control_windows(n_frames, cycle, n_modes):
+    """Frame ranges in which the auto-cycle is running control (the first mode)."""
+    return [range(start, min(start + cycle, n_frames))
+            for start in range(0, n_frames, cycle * n_modes)]
+
+
 def evaluate(expect, report, frames, requested, warmup):
     got = report.get("frames", len(frames))
     if got < requested:
@@ -108,6 +115,18 @@ def evaluate(expect, report, frames, requested, warmup):
         for a, b in zip(groups, groups[1:]):
             if b[0] - a[0] < period - SPIKE_SLACK:
                 fails.append(f"over-budget frame {b[0]} only {b[0] - a[0]} frames after {a[0]}, expected ~{period}")
+
+    if expect.get("auto_control_clean"):
+        cycle = expect["config"]["cycleFrames"]
+        n_modes = expect.get("auto_modes", AUTO_MODES)
+        by_index = {fr["index"]: fr for fr in frames}
+        for win in control_windows(got, cycle, n_modes):
+            # Like the warm-up: the first frames after a switch may still be
+            # paying for the previous mode's teardown and garbage.
+            over = [i for i in win[warmup:] if by_index.get(i, {}).get("over_budget")]
+            if over:
+                fails.append(f"control over budget during auto-cycle at frame {over[0]} "
+                             f"(window {win.start}-{win.stop - 1}, {len(over)} frames)")
 
     if "avg_rows_updated_min" in expect:
         mean = sum(fr["rows_updated"] for fr in body) / len(body) if body else 0

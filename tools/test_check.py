@@ -95,6 +95,25 @@ class EvaluateTests(unittest.TestCase):
         self.assertEqual(fails, ["game stopped at frame 120 of 300"])
 
 
+class AutoCycleTests(unittest.TestCase):
+    AUTO = {"config": {"mode": "auto", "cycleFrames": 5}, "auto_control_clean": True}
+
+    def test_control_windows(self):
+        self.assertEqual(check.control_windows(40, 5, 7), [range(0, 5), range(35, 40)])
+
+    def test_auto_control_clean(self):
+        dirty = [f(i, over=i == 37) for i in range(40)]
+        fails = run(self.AUTO, dirty)
+        self.assertEqual(len(fails), 1)
+        self.assertIn("37", fails[0])
+        clean = [f(i, over=10 <= i < 35) for i in range(40)]
+        self.assertEqual(run(self.AUTO, clean), [])
+
+    def test_auto_control_clean_skips_settle_frames(self):
+        frames = [f(i, over=i == 35) for i in range(40)]
+        self.assertEqual(run(self.AUTO, frames, warmup=1), [])
+
+
 class ConfigCheckTests(unittest.TestCase):
     def test_config_overwrite_detected(self):
         with tempfile.TemporaryDirectory() as d:
