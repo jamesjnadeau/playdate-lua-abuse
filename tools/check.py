@@ -8,6 +8,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -116,6 +117,17 @@ def evaluate(expect, report, frames, requested, warmup):
     return fails
 
 
+def config_check(data_dir, mode):
+    """The game must never write config.json: after a run it still names `mode`."""
+    try:
+        cfg = json.loads((data_dir / "config.json").read_text())
+    except (OSError, ValueError):
+        cfg = None
+    if not isinstance(cfg, dict) or cfg.get("mode") != mode:
+        return ["config.json was overwritten"]
+    return []
+
+
 # --- running pdsim ----------------------------------------------------------
 
 def find_sdk(env):
@@ -201,9 +213,10 @@ def main(argv=None):
     all_ok = True
     for mode, expect in modes.items():
         frames = args.frames or expect.get("frames", spec.get("frames", 300))
-        report, frame_list, _data_dir = run_mode(mode, frames, OUT / mode, sdk, pdsim, args.calibration,
-                                                 expect.get("config"))
-        fails = evaluate(expect, report, frame_list, frames, warmup)
+        config = expect.get("config") or {"mode": mode}
+        report, frame_list, data_dir = run_mode(mode, frames, OUT / mode, sdk, pdsim, args.calibration, config)
+        fails = evaluate(expect, report, frame_list, frames, warmup) + config_check(data_dir, config["mode"])
+        shutil.rmtree(data_dir, ignore_errors=True)
         all_ok &= not fails
         print(summary_line(mode, not fails, report, frame_list, warmup))
         for msg in fails:

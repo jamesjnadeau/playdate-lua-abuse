@@ -23,6 +23,13 @@
     "sprites": {
       "top_hotspot_matches": "sprite",
       "over_budget": true
+    },
+    "disk": {
+      "dominant_category": "io",
+      "over_budget": true
+    },
+    "spike": {
+      "spike_period": 60
     }
   }
 }

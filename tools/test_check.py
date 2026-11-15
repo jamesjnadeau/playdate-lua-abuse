@@ -95,6 +95,22 @@ class EvaluateTests(unittest.TestCase):
         self.assertEqual(fails, ["game stopped at frame 120 of 300"])
 
 
+class ConfigCheckTests(unittest.TestCase):
+    def test_config_overwrite_detected(self):
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "config.json").write_text('{"mode": "garbage"}')
+            self.assertEqual(check.config_check(Path(d), "disk"), ["config.json was overwritten"])
+
+    def test_config_intact_passes(self):
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "config.json").write_text('{"mode": "disk"}')
+            self.assertEqual(check.config_check(Path(d), "disk"), [])
+
+    def test_config_deleted_detected(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(check.config_check(Path(d), "disk"), ["config.json was overwritten"])
+
+
 class SetupTests(unittest.TestCase):
     def test_find_sdk_env_var(self):
         with tempfile.TemporaryDirectory() as d:

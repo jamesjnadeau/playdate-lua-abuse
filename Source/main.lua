@@ -21,6 +21,8 @@ import "modes/garbage"
 import "modes/hotloop"
 import "modes/overdraw"
 import "modes/sprites"
+import "modes/disk"
+import "modes/spike"
 
 local gfx <const> = playdate.graphics
 
