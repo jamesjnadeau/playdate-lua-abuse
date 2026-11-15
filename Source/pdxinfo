@@ -1,0 +1,6 @@
+name=Lua Abuse
+author=James Nadeau
+description=Bad Lua ideas that drop frames, as a showcase for the Playdate Performance Simulator
+bundleID=dev.jamesn.luaabuse
+version=1.0
+buildNumber=1
