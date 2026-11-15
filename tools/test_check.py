@@ -102,15 +102,26 @@ class AutoCycleTests(unittest.TestCase):
         self.assertEqual(check.control_windows(40, 5, 7), [range(0, 5), range(35, 40)])
 
     def test_auto_control_clean(self):
-        dirty = [f(i, over=i == 37) for i in range(40)]
+        dirty = [f(i, over=i == 37 or 5 <= i < 30) for i in range(40)]
         fails = run(self.AUTO, dirty)
         self.assertEqual(len(fails), 1)
         self.assertIn("37", fails[0])
-        clean = [f(i, over=10 <= i < 35) for i in range(40)]
+        clean = [f(i, over=5 <= i < 35) for i in range(40)]
         self.assertEqual(run(self.AUTO, clean), [])
 
+    def test_auto_cycle_must_actually_cycle(self):
+        # Sat in the menu: nothing over budget anywhere. Must fail.
+        idle = [f(i) for i in range(40)]
+        fails = run(self.AUTO, idle)
+        self.assertTrue(any("not over budget" in m for m in fails), fails)
+
+    def test_auto_busy_windows_pass_when_over(self):
+        # Slots 1..5 (garbage..disk) over budget, control and spike clean.
+        frames = [f(i, over=5 <= i < 30) for i in range(40)]
+        self.assertEqual(run(self.AUTO, frames), [])
+
     def test_auto_control_clean_skips_settle_frames(self):
-        frames = [f(i, over=i == 35) for i in range(40)]
+        frames = [f(i, over=i == 35 or 5 <= i < 30) for i in range(40)]
         self.assertEqual(run(self.AUTO, frames, warmup=1), [])
 
 
@@ -131,6 +142,12 @@ class ConfigCheckTests(unittest.TestCase):
 
 
 class SetupTests(unittest.TestCase):
+    def test_pdsim_command_none_without_cargo(self):
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "Cargo.toml").write_text("")
+            with mock.patch.object(check.shutil, "which", return_value=None):
+                self.assertIsNone(check.pdsim_command(Path(d)))
+
     def test_find_sdk_env_var(self):
         with tempfile.TemporaryDirectory() as d:
             self.assertEqual(check.find_sdk({"PLAYDATE_SDK_PATH": d, "HOME": d}), Path(d))

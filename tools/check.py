@@ -127,6 +127,18 @@ def evaluate(expect, report, frames, requested, warmup):
             if over:
                 fails.append(f"control over budget during auto-cycle at frame {over[0]} "
                              f"(window {win.start}-{win.stop - 1}, {len(over)} frames)")
+        # The cycle must really cycle: the sustained modes between control and
+        # spike (garbage..disk) are each mostly over budget in their window.
+        for slot in expect.get("auto_busy_slots", range(1, n_modes - 1)):
+            for ctl in control_windows(got, cycle, n_modes):
+                start = ctl.start + slot * cycle
+                win = [i for i in range(start, min(start + cycle, got))][warmup:]
+                if not win:
+                    continue
+                n_over = sum(1 for i in win if by_index.get(i, {}).get("over_budget"))
+                if n_over * 2 <= len(win):
+                    fails.append(f"auto-cycle slot {slot + 1} (frames {start}-{start + cycle - 1}) "
+                                 f"not over budget ({n_over}/{len(win)}): is the cycle running?")
 
     if "avg_rows_updated_min" in expect:
         mean = sum(fr["rows_updated"] for fr in body) / len(body) if body else 0
@@ -163,7 +175,7 @@ def pdsim_command(pdsim_dir):
     binary = pdsim_dir / "target" / "release" / "pdsim"
     if binary.is_file():
         return [str(binary)]
-    if (pdsim_dir / "Cargo.toml").is_file():
+    if (pdsim_dir / "Cargo.toml").is_file() and shutil.which("cargo"):
         return ["cargo", "run", "--quiet", "--release", "--manifest-path",
                 str(pdsim_dir / "Cargo.toml"), "-p", "pdsim-cli", "--"]
     return None
@@ -219,7 +231,7 @@ def main(argv=None):
     pdsim_dir = Path(os.environ.get("PDSIM_DIR", REPO.parent / "playdate-performance-simulator"))
     pdsim = pdsim_command(pdsim_dir)
     if pdsim is None:
-        setup_error(f"pdsim not found in {pdsim_dir}: build it or set PDSIM_DIR")
+        setup_error(f"pdsim not found in {pdsim_dir}: build it (cargo build --release) or set PDSIM_DIR")
 
     spec = json.loads(EXPECTATIONS.read_text())
     modes = spec["modes"]
