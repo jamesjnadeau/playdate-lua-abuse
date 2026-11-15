@@ -17,6 +17,7 @@ import "CoreLibs/timer"
 ABUSE_MODES = {}
 
 import "modes/control"
+import "modes/garbage"
 
 local gfx <const> = playdate.graphics
 

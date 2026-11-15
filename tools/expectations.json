@@ -2,6 +2,12 @@
   "warmup": 10,
   "frames": 300,
   "modes": {
-    "control": {"over_budget": false}
+    "control": {
+      "over_budget": false
+    },
+    "garbage": {
+      "dominant_category": "gc",
+      "over_budget": true
+    }
   }
 }
