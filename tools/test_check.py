@@ -1,6 +1,11 @@
+import contextlib
+import io
 import os
 import sys
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -88,6 +93,24 @@ class EvaluateTests(unittest.TestCase):
         frames = [f(i, over=True) for i in range(120)]
         fails = check.evaluate({"over_budget": False}, report(120), frames, 300, 10)
         self.assertEqual(fails, ["game stopped at frame 120 of 300"])
+
+
+class SetupTests(unittest.TestCase):
+    def test_find_sdk_env_var(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(check.find_sdk({"PLAYDATE_SDK_PATH": d, "HOME": d}), Path(d))
+
+    def test_find_sdk_missing(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertIsNone(check.find_sdk({"HOME": d}))
+
+    def test_main_exits_2_without_sdk(self):
+        err = io.StringIO()
+        with mock.patch.object(check, "find_sdk", return_value=None), contextlib.redirect_stderr(err):
+            with self.assertRaises(SystemExit) as cm:
+                check.main(["--mode", "control"])
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn("PLAYDATE_SDK_PATH", err.getvalue())
 
 
 if __name__ == "__main__":

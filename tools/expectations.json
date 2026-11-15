@@ -1,0 +1,7 @@
+{
+  "warmup": 10,
+  "frames": 300,
+  "modes": {
+    "control": {"over_budget": false}
+  }
+}
