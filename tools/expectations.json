@@ -13,6 +13,12 @@
       "dominant_category": "lua",
       "top_hotspot_matches": "hotloop\\.lua",
       "over_budget": true
+    },
+    "overdraw": {
+      "dominant_category": "gfx",
+      "top_hotspot_matches": "^\\[graphics\\.",
+      "avg_rows_updated_min": 230,
+      "over_budget": true
     }
   }
 }
